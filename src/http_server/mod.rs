@@ -1,14 +1,18 @@
 mod api;
+mod middleware;
 
 use std::sync::Mutex;
 use actix_web::{App, HttpServer, web::Data};
-use crate::{db_pool::DbPool, session::Session};
+use crate::session::{Session, DbPoolState};
+
 pub struct AppState {
-    db_pool: DbPool,
+    db_pool: DbPoolState,
     pub session: Mutex<Option<Session>>
 }
 
-pub async fn launch(db_pool: DbPool){
+pub type AppStateData = Data<AppState>;
+
+pub async fn launch(db_pool: DbPoolState){
     let app_state = Data::new(AppState {
         db_pool,
         session: Mutex::new(None)
@@ -16,6 +20,7 @@ pub async fn launch(db_pool: DbPool){
 
     HttpServer::new(move || {
         App::new()
+        .wrap(middleware::session::Factory::new(app_state.clone()))
         .app_data(app_state.clone())
         .service(api::service())
     })

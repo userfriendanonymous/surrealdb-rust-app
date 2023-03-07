@@ -1,6 +1,10 @@
 mod users;
+mod posts;
+mod utils;
 
 use surrealdb::{Datastore, Session};
+pub use users::User;
+pub use posts::Post;
 
 pub struct DbPool {
     datastore: Datastore,
