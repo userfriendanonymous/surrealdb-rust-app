@@ -34,9 +34,7 @@ impl DbPool {
 
         let responses = self.datastore.execute(
             "CREATE post CONTENT $data",
-            &self.session,
-            Some(vars),
-            false
+            &self.session, Some(vars), false
         ).await
         .map_err(|error| error.to_string())?;
 
@@ -51,14 +49,51 @@ impl DbPool {
         );
 
         let responses = self.datastore.execute(
-            "SELECT * FROM post WHERE id = $1",
-            &self.session,
-            Some(vars),
-            false
+            "SELECT * FROM post WHERE id = $id",
+            &self.session, Some(vars), false
         ).await
         .map_err(|error| error.to_string())?;
 
         let objects = query_result_into_objects(responses)?;
         Post::try_from(extract_single_object(objects)?)
     }
+
+    pub async fn delete_post(&self, id: i32) -> Result<Post, String> {
+        let vars: BTreeMap<String, Value> = b_tree_map!(
+            ("id", id)
+        );
+        let responses = self.datastore.execute(
+            "DELETE post WHERE id = $id",
+            &self.session, Some(vars), false
+        ).await
+        .map_err(|error| error.to_string())?;
+        
+        let objects = query_result_into_objects(responses)?;
+        Post::try_from(extract_single_object(objects)?)
+    }
+
+    pub async fn update_post(&self, id: i32, title: Option<String>, content: Option<String>) -> Result<Post, String> {
+        let mut data: BTreeMap<String, Value> = BTreeMap::new();
+        if let Some(title) = title {
+            data.insert("title".to_owned(), title.into());
+        }
+        if let Some(content) = content {
+            data.insert("content".to_owned(), content.into());
+        }
+
+        let vars: BTreeMap<String, Value> = b_tree_map!(
+            ("id", id),
+            ("data", data)
+        );
+        let responses = self.datastore.execute(
+            "UPDATE post WHERE id = $id CONTENT $data",
+            &self.session, Some(vars), false
+        ).await
+        .map_err(|error| error.to_string())?;
+        
+        let objects = query_result_into_objects(responses)?;
+        Post::try_from(extract_single_object(objects)?)
+    }
+
+
 }

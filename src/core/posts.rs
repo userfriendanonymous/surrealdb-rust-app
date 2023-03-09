@@ -27,3 +27,11 @@ pub async fn create(db_pool: &mut DbPool, title: String, content: String) -> Res
 pub async fn get(db_pool: &mut DbPool, id: i32) -> Result<Post, String> {
     Ok(Post::from(db_pool.get_post(id).await?))
 }
+
+pub async fn delete(db_pool: &mut DbPool, id: i32) -> Result<Post, String> {
+    Ok(Post::from(db_pool.delete_post(id).await?))
+}
+
+pub async fn update(db_pool: &mut DbPool, id: i32, title: Option<String>, content: Option<String>) -> Result<Post, String> {
+    Ok(Post::from(db_pool.update_post(id, title, content).await?))
+}
